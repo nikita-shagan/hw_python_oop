@@ -1,10 +1,16 @@
-from dataclasses import dataclass, asdict
-from typing import Union, Type
+from dataclasses import asdict, dataclass
+from typing import Type
 
 
 @dataclass
 class InfoMessage:
     """Информационное сообщение о тренировке."""
+
+    training_type: str
+    duration: float
+    distance: float
+    speed: float
+    calories: float
 
     MESSAGE = (
         'Тип тренировки: {training_type}; '
@@ -13,12 +19,6 @@ class InfoMessage:
         'Ср. скорость: {speed:.3f} км/ч; '
         'Потрачено ккал: {calories:.3f}.'
     )
-
-    training_type: str
-    duration: float
-    distance: float
-    speed: float
-    calories: float
 
     def get_message(self) -> str:
         """Возвращает информацию о тренировке."""
@@ -31,6 +31,7 @@ class Training:
     LEN_STEP = 0.65
     M_IN_KM = 1000
     MINUTES_IN_HOUR = 60
+    SECONDS_IN_MINUTE = 60
 
     def __init__(self, action: int, duration: float, weight: float) -> None:
         """Инициализация свойств."""
@@ -89,7 +90,12 @@ class SportsWalking(Training):
 
     COEFFICIENT_WEIGHT_1 = 0.035
     COEFFICIENT_WEIGHT_2 = 0.029
-    METER_PER_SECOND_COEFFICIENT = round(Training.M_IN_KM / 3600, 3)
+    METER_PER_SECOND_COEFFICIENT = round(
+        Training.M_IN_KM
+        / Training.MINUTES_IN_HOUR
+        / Training.SECONDS_IN_MINUTE,
+        3
+    )
     SPEED_DEGREE_INDICATOR = 2
     CM_IN_M = 100
 
@@ -171,7 +177,7 @@ class Swimming(Training):
         )
 
 
-TRAINING_TYPES: dict[str, Type[Union[Running, Swimming, SportsWalking]]] = {
+TRAINING_TYPES: dict[str, Type[Training]] = {
     'RUN': Running,
     'WLK': SportsWalking,
     'SWM': Swimming
@@ -181,7 +187,7 @@ TRAINING_TYPES: dict[str, Type[Union[Running, Swimming, SportsWalking]]] = {
 def read_package(training_type: str, training_data: list[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
     if training_type not in TRAINING_TYPES:
-        raise KeyError(f'Unknown training type: {training_type}')
+        raise ValueError(f'Unknown training type: {training_type}')
     return TRAINING_TYPES[training_type](*training_data)
 
 
@@ -198,5 +204,4 @@ if __name__ == '__main__':
     ]
 
     for workout_type, workout_data in packages:
-        workout = read_package(workout_type, workout_data)
-        main(workout)
+        main(read_package(workout_type, workout_data))
